@@ -1,1 +1,261 @@
-first version 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interior Finishing BOQ Generator</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            text-align: center;
+            color: var(--primary);
+        }
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: var(--card-bg);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: bold;
+        }
+        .total-row {
+            font-weight: bold;
+            font-size: 1.2em;
+            background-color: #e2e8f0;
+        }
+        #result-section {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Interior Finishing BOQ Generator</h1>
+
+    <div class="card">
+        <h2>Project Details & Specifications</h2>
+        
+        <div class="form-group">
+            <label for="project-area">Total Area (Square Meters)</label>
+            <input type="number" id="project-area" placeholder="e.g., 150" required>
+        </div>
+
+        <div class="form-group">
+            <label for="flooring">Flooring Type</label>
+            <select id="flooring">
+                <option value="250">Standard Ceramic (Cost: Medium)</option>
+                <option value="450">Porcelain (Cost: High)</option>
+                <option value="800">Marble (Cost: Premium)</option>
+                <option value="350">HDF Wood (Cost: Medium-High)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="painting">Painting & Wall Finish</label>
+            <select id="painting">
+                <option value="120">Standard Plastic Paint</option>
+                <option value="180">Washable Acrylic (Jotun/GLC)</option>
+                <option value="300">Decorative Paints / Partial Wallpaper</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="ceiling">Ceiling Decoration</label>
+            <select id="ceiling">
+                <option value="0">Standard Plaster & Paint (No Gypsum)</option>
+                <option value="150">Flat Gypsum Board with Spotlights</option>
+                <option value="250">Multi-level Gypsum with Hidden LED Strips</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="electrical">Electrical Facilities</label>
+            <select id="electrical">
+                <option value="300">Standard Wiring & Switches</option>
+                <option value="550">Premium Switches & Heavy Duty Cables</option>
+                <option value="900">Smart Home Ready (KNX/Zigbee wiring)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="plumbing">Plumbing & Sanitary</label>
+            <select id="plumbing">
+                <option value="400">Standard Pipes (BR/PVC) & Floor-mounted Toilets</option>
+                <option value="750">Premium Pipes & Wall-mounted Concealed Tanks</option>
+            </select>
+        </div>
+
+        <button onclick="generateBOQ()">Generate BOQ</button>
+    </div>
+
+    <div class="card" id="result-section">
+        <h2>Bill of Quantities (Estimated)</h2>
+        <p><em>Note: Prices are placeholder unit rates. Adjust the HTML code to match current local market rates.</em></p>
+        <table id="boq-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Est. Quantity</th>
+                    <th>Unit</th>
+                    <th>Unit Price</th>
+                    <th>Total Cost</th>
+                </tr>
+            </thead>
+            <tbody id="boq-body">
+                <!-- Rows will be injected here via JavaScript -->
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="4" style="text-align: right;">Total Estimated Cost:</td>
+                    <td id="grand-total">0</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <script>
+        function generateBOQ() {
+            // Get Area
+            const area = parseFloat(document.getElementById('project-area').value);
+            
+            if (!area || area <= 0) {
+                alert("Please enter a valid total area.");
+                return;
+            }
+
+            // Get selected values (acting as unit rates for this example)
+            const floorSelect = document.getElementById('flooring');
+            const paintSelect = document.getElementById('painting');
+            const ceilSelect = document.getElementById('ceiling');
+            const elecSelect = document.getElementById('electrical');
+            const plumbSelect = document.getElementById('plumbing');
+
+            // Define BOQ items
+            // Quantity formulas are estimates (e.g., wall area is roughly 2.5 to 3 times the floor area)
+            const items = [
+                {
+                    name: `Flooring: ${floorSelect.options[floorSelect.selectedIndex].text}`,
+                    qty: area * 1.1, // 10% waste factor
+                    unit: 'sqm',
+                    price: parseFloat(floorSelect.value)
+                },
+                {
+                    name: `Wall Finishes: ${paintSelect.options[paintSelect.selectedIndex].text}`,
+                    qty: area * 2.8, // Estimated wall area multiplier
+                    unit: 'sqm',
+                    price: parseFloat(paintSelect.value)
+                },
+                {
+                    name: `Ceiling: ${ceilSelect.options[ceilSelect.selectedIndex].text}`,
+                    qty: area,
+                    unit: 'sqm',
+                    price: parseFloat(ceilSelect.value)
+                },
+                {
+                    name: `Electrical Works: ${elecSelect.options[elecSelect.selectedIndex].text}`,
+                    qty: area, // Pricing electrical per sqm of the apartment for simplicity
+                    unit: 'sqm',
+                    price: parseFloat(elecSelect.value)
+                },
+                {
+                    name: `Plumbing & Sanitary: ${plumbSelect.options[plumbSelect.selectedIndex].text}`,
+                    qty: area, // Pricing plumbing per sqm for simplicity
+                    unit: 'sqm',
+                    price: parseFloat(plumbSelect.value)
+                }
+            ];
+
+            const tbody = document.getElementById('boq-body');
+            tbody.innerHTML = '';
+            let grandTotal = 0;
+
+            // Generate Table Rows
+            items.forEach(item => {
+                // Skip if quantity or price is 0 (like standard ceiling option)
+                if (item.price === 0) return;
+
+                const itemTotal = item.qty * item.price;
+                grandTotal += itemTotal;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.qty.toFixed(1)}</td>
+                    <td>${item.unit}</td>
+                    <td>${item.price.toLocaleString()}</td>
+                    <td>${itemTotal.toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update Total
+            document.getElementById('grand-total').textContent = grandTotal.toLocaleString();
+
+            // Show Results
+            document.getElementById('result-section').style.display = 'block';
+            
+            // Scroll to results
+            document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
